@@ -67,3 +67,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Arabic text support */
+@layer components {
+  [dir="auto"] {
+    font-family: 'Inter', 'Segoe UI', 'Tahoma', 'Arial', 'Noto Sans Arabic', 'Noto Naskh Arabic', sans-serif;
+    text-align: start;
+    unicode-bidi: plaintext;
+  }
+  
+  [dir="auto"] p {
+    margin: 0;
+    line-height: 1.6;
+  }
+  
+  /* Handle mixed Arabic-English text */
+  [dir="auto"] * {
+    unicode-bidi: plaintext;
+  }
+  
+  /* Ensure proper cursor positioning for RTL text */
+  [dir="auto"] .prose {
+    direction: auto;
+    text-align: start;
+  }
+}

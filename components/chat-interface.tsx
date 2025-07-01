@@ -54,6 +54,13 @@ export function ChatInterface() {
     scrollToBottom()
   }, [messages])
 
+  // Auto-scroll when streamedMessage updates (for bot typing effect)
+  useEffect(() => {
+    if (isThinking && streamedMessage !== null) {
+      scrollToBottom()
+    }
+  }, [streamedMessage, isThinking])
+
   useEffect(() => {
     const fetchProjects = async () => {
       const token = localStorage.getItem("access_token")
@@ -140,12 +147,12 @@ export function ChatInterface() {
       console.log("Full prompt from backend:", data["full_prompt"])
       const answer = data.answer || "Sorry, I couldn't process your request."
 
-      // Typing effect
+      // Simple typing effect
       let current = ""
       for (let i = 0; i < answer.length; i++) {
         current += answer[i]
         setStreamedMessage(current)
-        await new Promise((res) => setTimeout(res, 20))
+        await new Promise((res) => setTimeout(res, 30))
       }
 
       const aiMessage: Message = {
@@ -247,44 +254,42 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <Card className="flex-1 flex flex-col">
-        <CardContent className="flex-1 p-4 flex flex-col">
-
-          {/* Sticky file selector */}
-          <div className="z-10 sticky top-0 bg-background pb-4 flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileText className="h-4 w-4" />
-              <span className="font-medium">Active file:</span>
-            </div>
-            <Select
-              value={projectId || ""}
-              onValueChange={(value) => {
-                const selected = projects.find(p => p.id === value)
-                setProjectId(selected?.id || "")
-                setMessages([
-                  {
-                    id: Date.now().toString(),
-                    content: selected
-                      ? `Ready! You can now ask me about "${selected.name}".`
-                      : "Please select a file to start.",
-                    sender: "bot",
-                    timestamp: new Date(),
-                  },
-                ])
-              }}
-            >
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Select a file to analyze" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Sticky file selector - always visible at the top of the card */}
+        <div className="z-20 sticky top-0 bg-background pb-4 flex items-center gap-3 border-b border-border px-4 pt-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <FileText className="h-4 w-4" />
+            <span className="font-medium">Active file:</span>
           </div>
-
+          <Select
+            value={projectId || ""}
+            onValueChange={(value) => {
+              const selected = projects.find(p => p.id === value)
+              setProjectId(selected?.id || "")
+              setMessages([
+                {
+                  id: Date.now().toString(),
+                  content: selected
+                    ? `Ready! You can now ask me about "${selected.name}".`
+                    : "Please select a file to start.",
+                  sender: "bot",
+                  timestamp: new Date(),
+                },
+              ])
+            }}
+          >
+            <SelectTrigger className="w-[250px]">
+              <SelectValue placeholder="Select a file to analyze" />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map(p => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <CardContent className="flex-1 p-4 flex flex-col">
           {/* Scrollable chat area */}
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4 py-4">
@@ -319,12 +324,11 @@ export function ChatInterface() {
                           message.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                         }`}
                       >
-                        <div className="prose prose-sm break-words max-w-none">
+                        <div className="prose prose-sm break-words max-w-none" dir="auto">
                           <ReactMarkdown>
                             {message.content}
                           </ReactMarkdown>
                         </div>
-                        <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString()}</p>
                       </div>
                     </div>
                   </div>
@@ -353,12 +357,11 @@ export function ChatInterface() {
                       <Bot className="h-5 w-5" />
                     </div>
                     <div className="rounded-lg px-4 py-2 bg-muted">
-                      <div className="prose prose-sm break-words max-w-none">
+                      <div className="prose prose-sm break-words max-w-none" dir="auto">
                         <ReactMarkdown>
                           {streamedMessage + "▍"}
                         </ReactMarkdown>
                       </div>
-                      <p className="text-xs opacity-70 mt-1">{new Date().toLocaleTimeString()}</p>
                     </div>
                   </div>
                 </div>
@@ -400,6 +403,7 @@ export function ChatInterface() {
               onKeyDown={handleKeyDown}
               disabled={isUploading || isThinking}
               className="flex-1"
+              dir="auto"
             />
             <Button
               onClick={handleSendMessage}

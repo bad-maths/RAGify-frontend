@@ -9,7 +9,7 @@ import { ProjectProvider } from "@/components/project-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "RAG Chat Application",
+  title: "RAGify",
   description: "A modern chat application with file upload capabilities",
     generator: 'v0.dev'
 }
